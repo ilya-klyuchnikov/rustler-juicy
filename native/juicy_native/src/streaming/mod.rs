@@ -27,7 +27,7 @@ pub enum BailType {
     AwaitInput,
 }
 
-fn format_unexpected<'a>(env: Env<'a>, pos: Pos, reason: Unexpected) -> Term<'a> {
+fn format_unexpected(env: Env, pos: Pos, reason: Unexpected) -> Term {
     let position = pos.0 as u64;
     let explaination = reason.explain().encode(env);
     (
@@ -43,7 +43,7 @@ pub struct StreamingIterState {
 }
 pub struct StreamingIterStateWrapper(Mutex<StreamingIterState>);
 
-fn read_binaries<'a>(term: Term<'a>) -> NifResult<Vec<(Range<usize>, Binary<'a>)>> {
+fn read_binaries(term: Term) -> NifResult<Vec<(Range<usize>, Binary)>> {
     let binaries_iter: ListIterator = term.decode()?;
     let mut binaries_ranges: Vec<(Range<usize>, Binary)> = Vec::new();
     for term in binaries_iter {

@@ -21,7 +21,7 @@ impl BuildString {
         BuildString::Owned(Vec::new())
     }
 
-    pub fn append_range<'a, F>(&'a mut self, range: Range, range_provider: F)
+    pub fn append_range<F>(&mut self, range: Range, range_provider: F)
     where
         F: Fn(Range, &mut Vec<u8>),
     {
@@ -41,7 +41,7 @@ impl BuildString {
         }
     }
 
-    pub fn append_single<'a, F>(&'a mut self, single: u8, range_provider: F)
+    pub fn append_single<F>(&mut self, single: u8, range_provider: F)
     where
         F: Fn(Range, &mut Vec<u8>),
     {
@@ -61,7 +61,7 @@ impl BuildString {
         }
     }
 
-    pub fn append_codepoint<'a, F>(&'a mut self, codepoint: char, range_provider: F)
+    pub fn append_codepoint<F>(&mut self, codepoint: char, range_provider: F)
     where
         F: Fn(Range, &mut Vec<u8>),
     {

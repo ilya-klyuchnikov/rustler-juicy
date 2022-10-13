@@ -99,11 +99,7 @@ impl SpecWalker {
         }
     }
 
-    pub fn visit_terminal<'a>(
-        &'a mut self,
-        typ: ValueType,
-        key: Option<&PathEntry>,
-    ) -> PathPosition {
+    pub fn visit_terminal(&mut self, typ: ValueType, key: Option<&PathEntry>) -> PathPosition {
         self.try_child(typ, key)
     }
 
@@ -135,7 +131,7 @@ impl SpecWalker {
         resp
     }
 
-    pub fn exit_nonterminal<'a>(&'a mut self) -> PathPosition {
+    pub fn exit_nonterminal(&mut self) -> PathPosition {
         match self.height_off_current {
             0 => {
                 let current_id = self.current;

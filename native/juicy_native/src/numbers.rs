@@ -55,7 +55,7 @@ fn float_to_term<'a>(env: Env<'a>, num_str: &str) -> Term<'a> {
     number.encode(env)
 }
 
-pub fn number_data_to_term<'a, F>(env: Env<'a>, data: NumberData, range_provider: F) -> Term<'a>
+pub fn number_data_to_term<F>(env: Env, data: NumberData, range_provider: F) -> Term
 where
     F: Fn(Range, &mut Vec<u8>),
 {

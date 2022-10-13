@@ -19,7 +19,7 @@ mod atoms {
     }
 }
 
-fn read_opts<'a>(term: Term<'a>, stream_collect: bool) -> NifResult<NodeOptions> {
+fn read_opts(term: Term, stream_collect: bool) -> NifResult<NodeOptions> {
     let iterator: ListIterator = term.decode()?;
     let mut opts = NodeOptions::default();
     for decoded in iterator.map(|term| term.decode::<(Term, Term)>()) {
@@ -46,8 +46,8 @@ fn read_opts<'a>(term: Term<'a>, stream_collect: bool) -> NifResult<NodeOptions>
     Ok(opts)
 }
 
-fn read_node<'a>(
-    node: Term<'a>,
+fn read_node(
+    node: Term,
     nodes: &mut Vec<Node>,
     parent: NodeId,
     stream_collect: bool,
@@ -126,7 +126,7 @@ fn read_node<'a>(
     Err(Error::BadArg)
 }
 
-pub fn spec_from_term<'a>(root: Term<'a>) -> NifResult<Spec> {
+pub fn spec_from_term(root: Term) -> NifResult<Spec> {
     let mut nodes = Vec::<Node>::new();
 
     let sentinel = Node {
