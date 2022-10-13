@@ -189,8 +189,8 @@ fn parse_inner<'a>(env: Env<'a>,
     }
 }
 
-pub fn parse<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
-    let input: Binary = args[0].decode()?;
+pub fn parse<'a>(env: Env<'a>, input_term: Term<'a>) -> NifResult<Term<'a>> {
+    let input: Binary = input_term.decode()?;
 
     let mut iter_state = IterState {
         parser: Parser::new(),
@@ -207,15 +207,15 @@ pub fn parse<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     }
 }
 
-pub fn parse_iter<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
-    let input: Binary = args[0].decode()?;
-    let stack: Vec<Term<'a>> = args[1].decode()?;
-    let resource: ResourceArc<IterStateWrapper> = args[2].decode()?;
+pub fn parse_iter<'a>(env: Env<'a>, input_term: Term<'a>, stack_term: Term<'a>, resource_term: Term<'a>) -> NifResult<Term<'a>> {
+    let input: Binary = input_term.decode()?;
+    let stack: Vec<Term<'a>> = stack_term.decode()?;
+    let resource: ResourceArc<IterStateWrapper> = resource_term.decode()?;
     let mut resource_inner_guard = resource.0.lock().unwrap();
     let resource_inner = resource_inner_guard.deref_mut();
 
     match parse_inner(env, input, stack, resource_inner) {
         Ok(res) => Ok(res),
-        Err(stack) => Ok((::atoms::iter(), stack, args[2]).encode(env)),
+        Err(stack) => Ok((::atoms::iter(), stack, resource_term).encode(env)),
     }
 }

@@ -61,8 +61,8 @@ fn write_binaries<'a>(env: Env<'a>,
     res.encode(env)
 }
 
-pub fn parse_init<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
-    let spec = spec_from_term(args[0])?;
+pub fn parse_init<'a>(env: Env<'a>, term: Term<'a>) -> NifResult<Term<'a>> {
+    let spec = spec_from_term(term)?;
 
     let ss_state = SSState {
         path_tracker: PathTracker {
@@ -86,10 +86,10 @@ pub fn parse_init<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     Ok((::atoms::ok(), state).encode(env))
 }
 
-pub fn parse_iter<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
-    let binaries_ranges: Vec<(Range<usize>, Binary)> = read_binaries(args[0])?;
+pub fn parse_iter<'a>(env: Env<'a>, binaries: Term<'a>, parser: Term<'a>) -> NifResult<Term<'a>> {
+    let binaries_ranges: Vec<(Range<usize>, Binary)> = read_binaries(binaries)?;
     let (stack, resource): (Vec<Term<'a>>, ResourceArc<StreamingIterStateWrapper>) =
-        args[1].decode()?;
+        parser.decode()?;
 
     let (res, out_stack, mut yields, first_needed) = {
         let mut resource_inner_guard = resource.0.lock().unwrap();

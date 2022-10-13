@@ -35,33 +35,49 @@ mod atoms {
     }
 }
 
-rustler_export_nifs! {
-    "Elixir.Juicy.Native",
-    [
-        ("parse_init", 1, basic::parse),
-        ("parse_iter", 3, basic::parse_iter),
-
-        ("spec_parse_init", 2, basic_spec::parse_init),
-        ("spec_parse_iter", 1, basic_spec::parse_iter),
-
-        ("stream_parse_init", 1, streaming::parse_init),
-        ("stream_parse_iter", 2, streaming::parse_iter),
-
-        ("validate_spec", 1, validate_spec),
-    ],
-    Some(on_init)
+#[rustler::nif]
+fn parse_init<'a>(env: Env<'a>, input_term: Term<'a>) -> NifResult<Term<'a>> {
+    basic::parse(env, input_term)
 }
 
-fn validate_spec<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
-    match tree_spec::spec_from_term(args[0]) {
+#[rustler::nif]
+fn parse_iter<'a>(env: Env<'a>, input_term: Term<'a>, stack_term: Term<'a>, resource_term: Term<'a>) -> NifResult<Term<'a>> {
+    basic::parse_iter(env, input_term, stack_term, resource_term)
+}
+
+#[rustler::nif]
+fn spec_parse_init<'a>(env: Env<'a>, binary_term: Term<'a>, spec_term: Term<'a>) -> NifResult<Term<'a>> {
+    basic_spec::parse_init(env, binary_term, spec_term)
+}
+
+#[rustler::nif]
+fn spec_parse_iter<'a>(env: Env<'a>, term: Term<'a>) -> NifResult<Term<'a>> {
+    basic_spec::parse_iter(env, term)
+}
+
+#[rustler::nif]
+fn stream_parse_init<'a>(env: Env<'a>, term: Term<'a>) -> NifResult<Term<'a>> {
+    streaming::parse_init(env, term)
+}
+
+#[rustler::nif]
+fn stream_parse_iter<'a>(env: Env<'a>, binaries: Term<'a>, parser: Term<'a>) -> NifResult<Term<'a>> {
+    streaming::parse_iter(env, binaries, parser)
+}
+
+#[rustler::nif]
+fn validate_spec<'a>(env: Env<'a>, term: Term<'a>) -> NifResult<Term<'a>> {
+    match tree_spec::spec_from_term(term) {
         Ok(_) => Ok(atoms::ok().encode(env)),
         Err(_) => Ok(atoms::error().encode(env)),
     }
 }
 
-fn on_init<'a>(env: Env<'a>, _load_info: Term<'a>) -> bool {
+fn load<'a>(env: Env<'a>, _load_info: Term<'a>) -> bool {
     resource!(basic::IterStateWrapper, env);
     resource!(basic_spec::BasicSpecIterStateWrapper, env);
     resource!(streaming::StreamingIterStateWrapper, env);
     true
 }
+
+rustler::init!("Elixir.Juicy.Native", [parse_init, parse_iter, spec_parse_init, spec_parse_iter, stream_parse_init, stream_parse_iter, validate_spec], load = load);

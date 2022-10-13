@@ -31,9 +31,9 @@ pub struct BasicSpecIterState {
 }
 pub struct BasicSpecIterStateWrapper(Mutex<BasicSpecIterState>);
 
-pub fn parse_init<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
-    let binary: Binary = args[0].decode()?;
-    let spec = spec_from_term(args[1])?;
+pub fn parse_init<'a>(env: Env<'a>, binary_term: Term<'a>, spec_term: Term<'a>) -> NifResult<Term<'a>> {
+    let binary: Binary = binary_term.decode()?;
+    let spec = spec_from_term(spec_term)?;
 
     let ss_state = SSState {
         path_tracker: PathTracker {
@@ -57,10 +57,10 @@ pub fn parse_init<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     Ok((::atoms::ok(), state).encode(env))
 }
 
-pub fn parse_iter<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
+pub fn parse_iter<'a>(env: Env<'a>, term: Term<'a>) -> NifResult<Term<'a>> {
     let (binary, stack, resource): (Binary,
                                     Vec<Term<'a>>,
-                                    ResourceArc<BasicSpecIterStateWrapper>) = args[0].decode()?;
+                                    ResourceArc<BasicSpecIterStateWrapper>) = term.decode()?;
 
     let (res, mut out_stack) = {
         let mut resource_inner_guard = resource.0.lock().unwrap();
