@@ -1,15 +1,11 @@
-use ::rustler::{
-    Env,
-    Term,
-    Encoder,
-};
+use rustler::{Encoder, Env, Term};
 
-use ::num_traits::Num;
-use ::num_bigint::BigUint;
+use num_bigint::BigUint;
+use num_traits::Num;
 
-use ::std::str::FromStr;
+use std::str::FromStr;
 
-use ::iterative_json_parser::{NumberData, Range};
+use iterative_json_parser::{NumberData, Range};
 
 fn integer_to_bigint_term<'a>(env: Env<'a>, sign: bool, number: &str) -> Term<'a> {
     // http://erlang.org/doc/apps/erts/erl_ext_dist.html#id101259
@@ -60,13 +56,18 @@ fn float_to_term<'a>(env: Env<'a>, num_str: &str) -> Term<'a> {
 }
 
 pub fn number_data_to_term<'a, F>(env: Env<'a>, data: NumberData, range_provider: F) -> Term<'a>
-    where F: Fn(Range, &mut Vec<u8>) {
-
+where
+    F: Fn(Range, &mut Vec<u8>),
+{
     // TODO: Do not allocate
     let mut buf = Vec::<u8>::new();
 
     match data {
-        NumberData { decimal: None, exponent: None, .. } => {
+        NumberData {
+            decimal: None,
+            exponent: None,
+            ..
+        } => {
             // This is safe because the tokenizer only accepts digits when reading numbers.
             // This byte range will thus never contain anything other than characters 0...9.
             range_provider(data.integer, &mut buf);

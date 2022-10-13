@@ -1,5 +1,5 @@
-use ::tree_spec::{SpecWalker, PathEntry, ValueType, PathPosition, NodeId};
-use ::iterative_json_parser::{Position};
+use iterative_json_parser::Position;
+use tree_spec::{NodeId, PathEntry, PathPosition, SpecWalker, ValueType};
 
 pub struct PathTracker {
     pub path: Vec<PathEntry>,
@@ -7,7 +7,6 @@ pub struct PathTracker {
 }
 
 impl PathTracker {
-
     pub fn visit_terminal(&mut self, _pos: Position, typ: ValueType) -> PathPosition {
         let path_pos = self.walker.visit_terminal(typ, self.path.last());
         self.update_path();
@@ -52,5 +51,4 @@ impl PathTracker {
             None => (),
         }
     }
-
 }

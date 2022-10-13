@@ -1,12 +1,12 @@
-use std::ops::Range;
 use std::io::Write;
+use std::ops::Range;
 
-use ::rustler::{Env, Term, Encoder};
-use ::rustler::types::binary::{Binary, OwnedBinary};
+use rustler::types::binary::{Binary, OwnedBinary};
+use rustler::{Encoder, Env, Term};
 
 use super::InputProvider;
 
-use ::iterative_json_parser::Range as PRange;
+use iterative_json_parser::Range as PRange;
 
 pub enum StreamingInputResult {
     Ok(u8),
@@ -15,12 +15,14 @@ pub enum StreamingInputResult {
 }
 
 /// Provides input from a set of binaries.
-pub struct StreamingInputProvider<'a, 'b> where 'a: 'b {
-    pub binaries: &'b [(Range<usize>, Binary<'a>)]
+pub struct StreamingInputProvider<'a, 'b>
+where
+    'a: 'b,
+{
+    pub binaries: &'b [(Range<usize>, Binary<'a>)],
 }
 
 impl<'a, 'b> InputProvider<StreamingInputResult> for StreamingInputProvider<'a, 'b> {
-
     fn byte(&self, pos: usize) -> StreamingInputResult {
         for &(ref range, bin) in self.binaries {
             if range.start <= pos && range.end > pos {
@@ -32,7 +34,6 @@ impl<'a, 'b> InputProvider<StreamingInputResult> for StreamingInputProvider<'a, 
 
     fn push_range(&self, range: PRange, buf: &mut Vec<u8>) {
         for &(ref b_range, bin) in self.binaries.iter().rev() {
-
             let s = if range.start < b_range.start {
                 0
             } else {
@@ -57,5 +58,4 @@ impl<'a, 'b> InputProvider<StreamingInputResult> for StreamingInputProvider<'a, 
         bin.as_mut_slice().write(&buf).unwrap();
         bin.release(env).encode(env)
     }
-
 }

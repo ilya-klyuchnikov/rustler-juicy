@@ -1,28 +1,32 @@
-use iterative_json_parser::{Parser, Pos, ParseError, Unexpected};
+use iterative_json_parser::{ParseError, Parser, Pos, Unexpected};
 
-use rustler::{Env, Term, NifResult, Encoder};
 use rustler::resource::ResourceArc;
 use rustler::types::binary::Binary;
+use rustler::{Encoder, Env, NifResult, Term};
 
-use ::strings::BuildString;
+use strings::BuildString;
 
-use ::tree_spec::spec_from_term;
-use ::tree_spec::SpecWalker;
+use tree_spec::spec_from_term;
+use tree_spec::SpecWalker;
 
-use ::input_provider::single::SingleBinaryProvider;
+use input_provider::single::SingleBinaryProvider;
 
-use ::path_tracker::PathTracker;
+use path_tracker::PathTracker;
 
-use std::sync::Mutex;
 use std::ops::DerefMut;
+use std::sync::Mutex;
 
 mod source_sink;
-use self::source_sink::{StreamingSS, SSState};
+use self::source_sink::{SSState, StreamingSS};
 
 fn format_unexpected<'a>(env: Env<'a>, pos: Pos, reason: Unexpected) -> Term<'a> {
     let position = pos.0 as u64;
     let explaination = reason.explain().encode(env);
-    (::atoms::error(), (::atoms::unexpected(), position, explaination)).encode(env)
+    (
+        ::atoms::error(),
+        (::atoms::unexpected(), position, explaination),
+    )
+        .encode(env)
 }
 
 pub struct BasicSpecIterState {
@@ -31,7 +35,11 @@ pub struct BasicSpecIterState {
 }
 pub struct BasicSpecIterStateWrapper(Mutex<BasicSpecIterState>);
 
-pub fn parse_init<'a>(env: Env<'a>, binary_term: Term<'a>, spec_term: Term<'a>) -> NifResult<Term<'a>> {
+pub fn parse_init<'a>(
+    env: Env<'a>,
+    binary_term: Term<'a>,
+    spec_term: Term<'a>,
+) -> NifResult<Term<'a>> {
     let binary: Binary = binary_term.decode()?;
     let spec = spec_from_term(spec_term)?;
 
@@ -58,9 +66,11 @@ pub fn parse_init<'a>(env: Env<'a>, binary_term: Term<'a>, spec_term: Term<'a>) 
 }
 
 pub fn parse_iter<'a>(env: Env<'a>, term: Term<'a>) -> NifResult<Term<'a>> {
-    let (binary, stack, resource): (Binary,
-                                    Vec<Term<'a>>,
-                                    ResourceArc<BasicSpecIterStateWrapper>) = term.decode()?;
+    let (binary, stack, resource): (
+        Binary,
+        Vec<Term<'a>>,
+        ResourceArc<BasicSpecIterStateWrapper>,
+    ) = term.decode()?;
 
     let (res, mut out_stack) = {
         let mut resource_inner_guard = resource.0.lock().unwrap();

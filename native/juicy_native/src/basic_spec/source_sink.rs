@@ -1,25 +1,27 @@
 use std::io::Write;
 
-use ::strings::BuildString;
-use ::numbers::number_data_to_term;
+use numbers::number_data_to_term;
+use strings::BuildString;
 
-use ::tree_spec::ValueType;
+use tree_spec::ValueType;
 
-use rustler::{Env, Term, Encoder};
-use rustler::types::map::map_new;
 use rustler::types::binary::OwnedBinary;
+use rustler::types::map::map_new;
+use rustler::{Encoder, Env, Term};
 
-use ::iterative_json_parser::{Bailable, Source, Sink, Pos, PeekResult, Position, NumberData,
-                              StringPosition};
 use iterative_json_parser::Range as PRange;
+use iterative_json_parser::{
+    Bailable, NumberData, PeekResult, Pos, Position, Sink, Source, StringPosition,
+};
 
-use ::input_provider::InputProvider;
-use ::input_provider::single::SingleBinaryProvider;
+use input_provider::single::SingleBinaryProvider;
+use input_provider::InputProvider;
 
-use ::path_tracker::PathTracker;
+use path_tracker::PathTracker;
 
 pub struct StreamingSS<'a, 'b>
-    where 'a: 'b
+where
+    'a: 'b,
 {
     pub env: Env<'a>,
     pub input: SingleBinaryProvider<'a>,
@@ -80,7 +82,10 @@ impl<'a, 'b> Sink for StreamingSS<'a, 'b> {
         let term = number_data_to_term(self.env, num, |r, b| self.input.push_range(r, b));
         self.out_stack.push(term);
 
-        let curr_node = self.state.path_tracker.visit_terminal(pos, ValueType::Number);
+        let curr_node = self
+            .state
+            .path_tracker
+            .visit_terminal(pos, ValueType::Number);
         //self.do_stream(curr_node)?;
 
         self.state.first_needed = self.state.position;
@@ -89,7 +94,10 @@ impl<'a, 'b> Sink for StreamingSS<'a, 'b> {
     fn push_bool(&mut self, pos: Position, val: bool) -> Result<(), Self::Bail> {
         self.out_stack.push(val.encode(self.env));
 
-        let curr_node = self.state.path_tracker.visit_terminal(pos, ValueType::Boolean);
+        let curr_node = self
+            .state
+            .path_tracker
+            .visit_terminal(pos, ValueType::Boolean);
         //self.do_stream(curr_node)?;
 
         self.state.first_needed = self.state.position;
@@ -113,15 +121,21 @@ impl<'a, 'b> Sink for StreamingSS<'a, 'b> {
     }
     fn append_string_range(&mut self, range: PRange) {
         let input = &self.input;
-        self.state.current_string.append_range(range, |r, b| input.push_range(r, b));
+        self.state
+            .current_string
+            .append_range(range, |r, b| input.push_range(r, b));
     }
     fn append_string_single(&mut self, character: u8) {
         let input = &self.input;
-        self.state.current_string.append_single(character, |r, b| input.push_range(r, b));
+        self.state
+            .current_string
+            .append_single(character, |r, b| input.push_range(r, b));
     }
     fn append_string_codepoint(&mut self, codepoint: char) {
         let input = &self.input;
-        self.state.current_string.append_codepoint(codepoint, |r, b| input.push_range(r, b));
+        self.state
+            .current_string
+            .append_codepoint(codepoint, |r, b| input.push_range(r, b));
     }
     fn finalize_string(&mut self, pos: StringPosition) -> Result<(), Self::Bail> {
         let string = ::std::mem::replace(&mut self.state.current_string, BuildString::None);
@@ -131,14 +145,13 @@ impl<'a, 'b> Sink for StreamingSS<'a, 'b> {
                 let key = string.owned_to_vec();
 
                 let curr_node_id = self.state.path_tracker.enter_key(key.clone());
-                let key_atom = curr_node_id
-                    .and_then(|node_id| {
-                        let curr_node = self.state.path_tracker.walker.spec.get(node_id);
-                        match curr_node.options.atom_mappings {
-                            Some(ref some) => some.get(&key).cloned(),
-                            None => None,
-                        }
-                    });
+                let key_atom = curr_node_id.and_then(|node_id| {
+                    let curr_node = self.state.path_tracker.walker.spec.get(node_id);
+                    match curr_node.options.atom_mappings {
+                        Some(ref some) => some.get(&key).cloned(),
+                        None => None,
+                    }
+                });
 
                 if let Some(atom) = key_atom {
                     self.out_stack.push(atom.encode(self.env));
@@ -152,7 +165,10 @@ impl<'a, 'b> Sink for StreamingSS<'a, 'b> {
                 let string_term = string.to_term(&mut self.input, self.env);
                 self.out_stack.push(string_term);
 
-                let curr_node = self.state.path_tracker.visit_terminal(pos.to_position(), ValueType::String);
+                let curr_node = self
+                    .state
+                    .path_tracker
+                    .visit_terminal(pos.to_position(), ValueType::String);
             }
         }
         self.state.first_needed = self.state.position;
@@ -164,20 +180,24 @@ impl<'a, 'b> Sink for StreamingSS<'a, 'b> {
 
         let curr_node_id = self.state.path_tracker.exit_map();
 
-        let struct_atom = curr_node_id.current
-            .and_then(|node_id| {
-                let curr_node = self.state.path_tracker.walker.spec.get(node_id);
-                match curr_node.options.struct_atom {
-                    Some(ref atom) => Some(atom.clone()),
-                    None => None,
-                }
-            });
+        let struct_atom = curr_node_id.current.and_then(|node_id| {
+            let curr_node = self.state.path_tracker.walker.spec.get(node_id);
+            match curr_node.options.struct_atom {
+                Some(ref atom) => Some(atom.clone()),
+                None => None,
+            }
+        });
 
         if let Some(atom) = struct_atom {
             let term = self.out_stack.pop().unwrap();
-            self.out_stack.push(term.map_put(
-                ::atoms::__struct__().encode(self.env),
-                atom.encode(self.env)).ok().unwrap());
+            self.out_stack.push(
+                term.map_put(
+                    ::atoms::__struct__().encode(self.env),
+                    atom.encode(self.env),
+                )
+                .ok()
+                .unwrap(),
+            );
         }
 
         Ok(())

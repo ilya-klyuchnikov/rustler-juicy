@@ -2,27 +2,29 @@ use std::io::Write;
 
 use super::BailType;
 
-use ::strings::BuildString;
-use ::numbers::number_data_to_term;
+use numbers::number_data_to_term;
+use strings::BuildString;
 
-use ::tree_spec::ValueType;
-use ::tree_spec::NodeId;
+use tree_spec::NodeId;
+use tree_spec::ValueType;
 
-use rustler::{Env, Term, Encoder};
-use rustler::types::map::map_new;
 use rustler::types::binary::OwnedBinary;
+use rustler::types::map::map_new;
+use rustler::{Encoder, Env, Term};
 
-use ::iterative_json_parser::{Bailable, Source, Sink, Pos, PeekResult, Position, NumberData,
-                              StringPosition};
 use iterative_json_parser::Range as PRange;
+use iterative_json_parser::{
+    Bailable, NumberData, PeekResult, Pos, Position, Sink, Source, StringPosition,
+};
 
-use ::input_provider::InputProvider;
-use ::input_provider::streaming::{StreamingInputProvider, StreamingInputResult};
+use input_provider::streaming::{StreamingInputProvider, StreamingInputResult};
+use input_provider::InputProvider;
 
-use ::path_tracker::PathTracker;
+use path_tracker::PathTracker;
 
 pub struct StreamingSS<'a, 'b>
-    where 'a: 'b
+where
+    'a: 'b,
 {
     pub env: Env<'a>,
     pub input: StreamingInputProvider<'a, 'b>,
@@ -68,7 +70,6 @@ impl<'a, 'b> Source for StreamingSS<'a, 'b> {
 }
 
 impl<'a, 'b> StreamingSS<'a, 'b> {
-
     fn do_stream(&mut self, node_id_opt: Option<NodeId>) -> Result<(), BailType> {
         match node_id_opt {
             Some(node_id) => {
@@ -77,14 +78,14 @@ impl<'a, 'b> StreamingSS<'a, 'b> {
                     let path = self.state.path_tracker.path.encode(self.env);
                     let term = self.out_stack.pop().unwrap();
                     self.out_stack.push(::atoms::streamed().encode(self.env));
-                    self.yields.push((::atoms::yield_(), (path, term)).encode(self.env))
+                    self.yields
+                        .push((::atoms::yield_(), (path, term)).encode(self.env))
                 }
             }
             None => (),
         }
         Ok(())
     }
-
 }
 
 impl<'a, 'b> Sink for StreamingSS<'a, 'b> {
@@ -105,7 +106,10 @@ impl<'a, 'b> Sink for StreamingSS<'a, 'b> {
         let term = number_data_to_term(self.env, num, |r, b| self.input.push_range(r, b));
         self.out_stack.push(term);
 
-        let curr_node = self.state.path_tracker.visit_terminal(pos, ValueType::Number);
+        let curr_node = self
+            .state
+            .path_tracker
+            .visit_terminal(pos, ValueType::Number);
         self.do_stream(curr_node.current)?;
 
         self.state.first_needed = self.state.position;
@@ -114,7 +118,10 @@ impl<'a, 'b> Sink for StreamingSS<'a, 'b> {
     fn push_bool(&mut self, pos: Position, val: bool) -> Result<(), Self::Bail> {
         self.out_stack.push(val.encode(self.env));
 
-        let curr_node = self.state.path_tracker.visit_terminal(pos, ValueType::Boolean);
+        let curr_node = self
+            .state
+            .path_tracker
+            .visit_terminal(pos, ValueType::Boolean);
         self.do_stream(curr_node.current)?;
 
         self.state.first_needed = self.state.position;
@@ -138,15 +145,21 @@ impl<'a, 'b> Sink for StreamingSS<'a, 'b> {
     }
     fn append_string_range(&mut self, range: PRange) {
         let input = &self.input;
-        self.state.current_string.append_range(range, |r, b| input.push_range(r, b));
+        self.state
+            .current_string
+            .append_range(range, |r, b| input.push_range(r, b));
     }
     fn append_string_single(&mut self, character: u8) {
         let input = &self.input;
-        self.state.current_string.append_single(character, |r, b| input.push_range(r, b));
+        self.state
+            .current_string
+            .append_single(character, |r, b| input.push_range(r, b));
     }
     fn append_string_codepoint(&mut self, codepoint: char) {
         let input = &self.input;
-        self.state.current_string.append_codepoint(codepoint, |r, b| input.push_range(r, b));
+        self.state
+            .current_string
+            .append_codepoint(codepoint, |r, b| input.push_range(r, b));
     }
     fn finalize_string(&mut self, pos: StringPosition) -> Result<(), Self::Bail> {
         let string = ::std::mem::replace(&mut self.state.current_string, BuildString::None);
@@ -164,7 +177,10 @@ impl<'a, 'b> Sink for StreamingSS<'a, 'b> {
                 let string_term = string.to_term(&mut self.input, self.env);
                 self.out_stack.push(string_term);
 
-                let curr_node = self.state.path_tracker.visit_terminal(pos.to_position(), ValueType::String);
+                let curr_node = self
+                    .state
+                    .path_tracker
+                    .visit_terminal(pos.to_position(), ValueType::String);
                 self.do_stream(curr_node.current)?;
             }
         }

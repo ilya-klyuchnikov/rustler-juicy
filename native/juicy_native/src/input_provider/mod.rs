@@ -1,5 +1,5 @@
-use ::iterative_json_parser::Range as PRange;
-use ::rustler::{Term, Env};
+use iterative_json_parser::Range as PRange;
+use rustler::{Env, Term};
 
 pub mod single;
 pub mod streaming;

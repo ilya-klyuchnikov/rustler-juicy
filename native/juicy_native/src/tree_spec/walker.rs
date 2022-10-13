@@ -1,7 +1,7 @@
-use super::{Spec, NodeId, ValueType};
+use super::{NodeId, Spec, ValueType};
 
-use ::rustler::{Env, Term, Encoder};
-use ::rustler::types::binary::OwnedBinary;
+use rustler::types::binary::OwnedBinary;
+use rustler::{Encoder, Env, Term};
 use std::io::Write;
 
 #[derive(Debug)]
@@ -92,19 +92,18 @@ impl SpecWalker {
                     parent: Some(self.current),
                 }
             }
-            _ => {
-                PathPosition {
-                    current: None,
-                    parent: None,
-                }
-            }
+            _ => PathPosition {
+                current: None,
+                parent: None,
+            },
         }
     }
 
-    pub fn visit_terminal<'a>(&'a mut self,
-                              typ: ValueType,
-                              key: Option<&PathEntry>)
-                              -> PathPosition {
+    pub fn visit_terminal<'a>(
+        &'a mut self,
+        typ: ValueType,
+        key: Option<&PathEntry>,
+    ) -> PathPosition {
         self.try_child(typ, key)
     }
 
@@ -116,10 +115,11 @@ impl SpecWalker {
         }
     }
 
-    pub fn enter_nonterminal<'a>(&mut self,
-                                 typ: ValueType,
-                                 key: Option<&PathEntry>)
-                                 -> PathPosition {
+    pub fn enter_nonterminal<'a>(
+        &mut self,
+        typ: ValueType,
+        key: Option<&PathEntry>,
+    ) -> PathPosition {
         let resp = self.try_child(typ, key);
 
         match resp.current {

@@ -1,16 +1,10 @@
+use rustler::types::atom::Atom;
+use rustler::types::list::ListIterator;
+use rustler::types::map::MapIterator;
+use rustler::{Error, NifResult, Term};
 use std::collections::HashMap;
-use ::rustler::{ Term, NifResult, Error };
-use ::rustler::types::list::ListIterator;
-use ::rustler::types::map::MapIterator;
-use ::rustler::types::atom::Atom;
 
-use super::{
-    NodeOptions,
-    NodeId,
-    Node,
-    NodeVariant,
-    Spec,
-};
+use super::{Node, NodeId, NodeOptions, NodeVariant, Spec};
 
 mod atoms {
     atoms! {
@@ -47,13 +41,17 @@ fn read_opts<'a>(term: Term<'a>, stream_collect: bool) -> NifResult<NodeOptions>
         } else if atoms::ignore_non_atoms() == key {
             opts.ignore_non_atoms = value.decode()?;
         }
-
     }
     opts.stream_collect = opts.stream | stream_collect;
     Ok(opts)
 }
 
-fn read_node<'a>(node: Term<'a>, nodes: &mut Vec<Node>, parent: NodeId, stream_collect: bool) -> NifResult<NodeId> {
+fn read_node<'a>(
+    node: Term<'a>,
+    nodes: &mut Vec<Node>,
+    parent: NodeId,
+    stream_collect: bool,
+) -> NifResult<NodeId> {
     let current = NodeId(nodes.len());
 
     // Arity 3
@@ -70,9 +68,7 @@ fn read_node<'a>(node: Term<'a>, nodes: &mut Vec<Node>, parent: NodeId, stream_c
                 });
 
                 let child = read_node(data, nodes, current, child_stream_collect)?;
-                nodes[current.0].variant = NodeVariant::Map {
-                    child: child,
-                };
+                nodes[current.0].variant = NodeVariant::Map { child: child };
 
                 Ok(current)
             } else if atoms::map_keys() == typ {
@@ -87,9 +83,7 @@ fn read_node<'a>(node: Term<'a>, nodes: &mut Vec<Node>, parent: NodeId, stream_c
                     let child = read_node(value, nodes, current, child_stream_collect)?;
                     children.insert(key.decode()?, child);
                 }
-                nodes[current.0].variant = NodeVariant::MapKeys {
-                    children: children,
-                };
+                nodes[current.0].variant = NodeVariant::MapKeys { children: children };
 
                 Ok(current)
             } else if atoms::array() == typ {
@@ -100,16 +94,13 @@ fn read_node<'a>(node: Term<'a>, nodes: &mut Vec<Node>, parent: NodeId, stream_c
                 });
 
                 let child = read_node(data, nodes, current, child_stream_collect)?;
-                nodes[current.0].variant = NodeVariant::Array {
-                    child: child,
-                };
+                nodes[current.0].variant = NodeVariant::Array { child: child };
 
                 Ok(current)
             } else {
                 Err(Error::BadArg)
             };
-
-        },
+        }
         Err(_) => (),
     }
 
@@ -128,8 +119,7 @@ fn read_node<'a>(node: Term<'a>, nodes: &mut Vec<Node>, parent: NodeId, stream_c
             } else {
                 Err(Error::BadArg)
             };
-
-        },
+        }
         Err(_) => (),
     }
 

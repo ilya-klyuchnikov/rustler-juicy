@@ -1,25 +1,25 @@
-use iterative_json_parser::{Parser, Pos, ParseError, Unexpected};
+use iterative_json_parser::{ParseError, Parser, Pos, Unexpected};
 
-use rustler::{Env, Term, NifResult, Encoder};
 use rustler::resource::ResourceArc;
 use rustler::types::binary::Binary;
 use rustler::types::list::ListIterator;
+use rustler::{Encoder, Env, NifResult, Term};
 
-use ::strings::BuildString;
+use strings::BuildString;
 
-use ::tree_spec::spec_from_term;
-use ::tree_spec::SpecWalker;
+use tree_spec::spec_from_term;
+use tree_spec::SpecWalker;
 
-use ::input_provider::streaming::StreamingInputProvider;
+use input_provider::streaming::StreamingInputProvider;
 
-use ::path_tracker::PathTracker;
+use path_tracker::PathTracker;
 
-use std::sync::Mutex;
 use std::ops::DerefMut;
 use std::ops::Range;
+use std::sync::Mutex;
 
 mod source_sink;
-use self::source_sink::{StreamingSS, SSState};
+use self::source_sink::{SSState, StreamingSS};
 
 #[derive(Copy, Clone)]
 pub enum BailType {
@@ -30,7 +30,11 @@ pub enum BailType {
 fn format_unexpected<'a>(env: Env<'a>, pos: Pos, reason: Unexpected) -> Term<'a> {
     let position = pos.0 as u64;
     let explaination = reason.explain().encode(env);
-    (::atoms::error(), (::atoms::unexpected(), position, explaination)).encode(env)
+    (
+        ::atoms::error(),
+        (::atoms::unexpected(), position, explaination),
+    )
+        .encode(env)
 }
 
 pub struct StreamingIterState {
@@ -50,11 +54,13 @@ fn read_binaries<'a>(term: Term<'a>) -> NifResult<Vec<(Range<usize>, Binary<'a>)
     Ok(binaries_ranges)
 }
 
-fn write_binaries<'a>(env: Env<'a>,
-                      binaries: &Vec<(Range<usize>, Binary<'a>)>,
-                      last_needed: usize)
-                      -> Term<'a> {
-    let res: Vec<Term> = binaries.iter()
+fn write_binaries<'a>(
+    env: Env<'a>,
+    binaries: &Vec<(Range<usize>, Binary<'a>)>,
+    last_needed: usize,
+) -> Term<'a> {
+    let res: Vec<Term> = binaries
+        .iter()
         .filter(|&&(ref range, _)| range.end >= last_needed)
         .map(|&(ref range, bin)| (range.start, bin).encode(env))
         .collect();
@@ -97,7 +103,9 @@ pub fn parse_iter<'a>(env: Env<'a>, binaries: Term<'a>, parser: Term<'a>) -> Nif
 
         let mut ss = StreamingSS {
             env: env,
-            input: StreamingInputProvider { binaries: &binaries_ranges },
+            input: StreamingInputProvider {
+                binaries: &binaries_ranges,
+            },
             next_reschedule: iter_state.ss_state.position + 40_000,
             out_stack: stack,
             state: &mut iter_state.ss_state,

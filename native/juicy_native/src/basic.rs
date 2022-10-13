@@ -1,20 +1,22 @@
-use iterative_json_parser::{Parser, Source, PeekResult, Sink, Range, Pos, NumberData, ParseError,
-                            Unexpected, Bailable, Position, StringPosition};
+use iterative_json_parser::{
+    Bailable, NumberData, ParseError, Parser, PeekResult, Pos, Position, Range, Sink, Source,
+    StringPosition, Unexpected,
+};
 
-use rustler::{Env, Term, NifResult, Encoder};
 use rustler::resource::ResourceArc;
 use rustler::types::binary::Binary;
-use rustler::types::map::map_new;
 use rustler::types::binary::OwnedBinary;
+use rustler::types::map::map_new;
+use rustler::{Encoder, Env, NifResult, Term};
 
-use ::strings::BuildString;
-use ::numbers::number_data_to_term;
-use ::input_provider::InputProvider;
-use ::input_provider::single::SingleBinaryProvider;
+use input_provider::single::SingleBinaryProvider;
+use input_provider::InputProvider;
+use numbers::number_data_to_term;
+use strings::BuildString;
 
 use std::io::Write;
-use std::sync::Mutex;
 use std::ops::DerefMut;
+use std::sync::Mutex;
 
 struct BasicSS<'a, 'b> {
     env: Env<'a>,
@@ -139,15 +141,15 @@ impl<'a, 'b> Sink for BasicSS<'a, 'b> {
     }
 }
 
-fn format_unexpected<'a>(env: Env<'a>,
-                         parser: &Parser,
-                         pos: Pos,
-                         reason: Unexpected)
-                         -> Term<'a> {
+fn format_unexpected<'a>(env: Env<'a>, parser: &Parser, pos: Pos, reason: Unexpected) -> Term<'a> {
     let parser_state = format!("{:?}", parser).encode(env);
     let position = pos.0 as u64;
     let explaination = reason.explain().encode(env);
-    (::atoms::error(), (::atoms::unexpected(), position, explaination, parser_state)).encode(env)
+    (
+        ::atoms::error(),
+        (::atoms::unexpected(), position, explaination, parser_state),
+    )
+        .encode(env)
 }
 
 pub struct IterState {
@@ -157,11 +159,12 @@ pub struct IterState {
 }
 pub struct IterStateWrapper(Mutex<IterState>);
 
-fn parse_inner<'a>(env: Env<'a>,
-                   input: Binary<'a>,
-                   stack: Vec<Term<'a>>,
-                   iter_state: &mut IterState)
-                   -> Result<Term<'a>, Vec<Term<'a>>> {
+fn parse_inner<'a>(
+    env: Env<'a>,
+    input: Binary<'a>,
+    stack: Vec<Term<'a>>,
+    iter_state: &mut IterState,
+) -> Result<Term<'a>, Vec<Term<'a>>> {
     let mut ss = BasicSS {
         env: env,
         input: SingleBinaryProvider::new(input),
@@ -179,9 +182,7 @@ fn parse_inner<'a>(env: Env<'a>,
             let term = ss.out_stack.pop().unwrap();
             Ok((::atoms::ok(), term).encode(env))
         }
-        Err(ParseError::SourceBail(())) => {
-            Err(ss.out_stack)
-        }
+        Err(ParseError::SourceBail(())) => Err(ss.out_stack),
         Err(ParseError::Unexpected(pos, reason)) => {
             Ok(format_unexpected(env, &iter_state.parser, pos, reason))
         }
@@ -207,7 +208,12 @@ pub fn parse<'a>(env: Env<'a>, input_term: Term<'a>) -> NifResult<Term<'a>> {
     }
 }
 
-pub fn parse_iter<'a>(env: Env<'a>, input_term: Term<'a>, stack_term: Term<'a>, resource_term: Term<'a>) -> NifResult<Term<'a>> {
+pub fn parse_iter<'a>(
+    env: Env<'a>,
+    input_term: Term<'a>,
+    stack_term: Term<'a>,
+    resource_term: Term<'a>,
+) -> NifResult<Term<'a>> {
     let input: Binary = input_term.decode()?;
     let stack: Vec<Term<'a>> = stack_term.decode()?;
     let resource: ResourceArc<IterStateWrapper> = resource_term.decode()?;

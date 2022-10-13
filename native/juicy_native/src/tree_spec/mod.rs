@@ -1,11 +1,11 @@
-use std::collections::HashMap;
 use rustler::types::atom::Atom;
+use std::collections::HashMap;
 
 mod from_term;
 mod walker;
 
 pub use self::from_term::spec_from_term;
-pub use self::walker::{SpecWalker, PathEntry, PathPosition};
+pub use self::walker::{PathEntry, PathPosition, SpecWalker};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum ValueType {
@@ -31,13 +31,12 @@ pub struct Node {
 pub enum NodeVariant {
     Sentinel,
     Any,
-    Array { child: NodeId, },
-    Map { child: NodeId, },
-    MapKeys { children: HashMap<String, NodeId>, },
+    Array { child: NodeId },
+    Map { child: NodeId },
+    MapKeys { children: HashMap<String, NodeId> },
 }
 
 impl NodeVariant {
-
     pub fn matches(&self, value: ValueType) -> bool {
         match self {
             &NodeVariant::Sentinel => unreachable!(),
@@ -76,7 +75,6 @@ impl NodeVariant {
             _ => unimplemented!(),
         }
     }
-
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
