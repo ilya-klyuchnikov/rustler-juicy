@@ -1,7 +1,7 @@
 use super::{Spec, NodeId, ValueType};
 
-use ::rustler::{NifEnv, NifTerm, NifEncoder};
-use ::rustler::types::binary::OwnedNifBinary;
+use ::rustler::{Env, Term, Encoder};
+use ::rustler::types::binary::OwnedBinary;
 use std::io::Write;
 
 #[derive(Debug)]
@@ -12,12 +12,12 @@ pub enum PathEntry {
     Index(usize),
 }
 
-impl NifEncoder for PathEntry {
-    fn encode<'a>(&self, env: NifEnv<'a>) -> NifTerm<'a> {
+impl Encoder for PathEntry {
+    fn encode<'a>(&self, env: Env<'a>) -> Term<'a> {
         match self {
             &PathEntry::Index(idx) => ((idx - 1) as u64).encode(env),
             &PathEntry::Key(ref key) => {
-                let mut bin = OwnedNifBinary::new(key.len()).unwrap();
+                let mut bin = OwnedBinary::new(key.len()).unwrap();
                 bin.as_mut_slice().write(key).unwrap();
                 bin.release(env).encode(env)
             }

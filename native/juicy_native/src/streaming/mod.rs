@@ -1,9 +1,9 @@
 use iterative_json_parser::{Parser, Pos, ParseError, Unexpected};
 
-use rustler::{NifEnv, NifTerm, NifResult, NifEncoder};
+use rustler::{Env, Term, NifResult, Encoder};
 use rustler::resource::ResourceArc;
-use rustler::types::binary::NifBinary;
-use rustler::types::list::NifListIterator;
+use rustler::types::binary::Binary;
+use rustler::types::list::ListIterator;
 
 use ::strings::BuildString;
 
@@ -27,7 +27,7 @@ pub enum BailType {
     AwaitInput,
 }
 
-fn format_unexpected<'a>(env: NifEnv<'a>, pos: Pos, reason: Unexpected) -> NifTerm<'a> {
+fn format_unexpected<'a>(env: Env<'a>, pos: Pos, reason: Unexpected) -> Term<'a> {
     let position = pos.0 as u64;
     let explaination = reason.explain().encode(env);
     (::atoms::error(), (::atoms::unexpected(), position, explaination)).encode(env)
@@ -39,29 +39,29 @@ pub struct StreamingIterState {
 }
 pub struct StreamingIterStateWrapper(Mutex<StreamingIterState>);
 
-fn read_binaries<'a>(term: NifTerm<'a>) -> NifResult<Vec<(Range<usize>, NifBinary<'a>)>> {
-    let binaries_iter: NifListIterator = term.decode()?;
-    let mut binaries_ranges: Vec<(Range<usize>, NifBinary)> = Vec::new();
+fn read_binaries<'a>(term: Term<'a>) -> NifResult<Vec<(Range<usize>, Binary<'a>)>> {
+    let binaries_iter: ListIterator = term.decode()?;
+    let mut binaries_ranges: Vec<(Range<usize>, Binary)> = Vec::new();
     for term in binaries_iter {
-        let (start, bin): (usize, NifBinary) = term.decode()?;
+        let (start, bin): (usize, Binary) = term.decode()?;
         let range = start..(start + bin.len());
         binaries_ranges.push((range, bin));
     }
     Ok(binaries_ranges)
 }
 
-fn write_binaries<'a>(env: NifEnv<'a>,
-                      binaries: &Vec<(Range<usize>, NifBinary<'a>)>,
+fn write_binaries<'a>(env: Env<'a>,
+                      binaries: &Vec<(Range<usize>, Binary<'a>)>,
                       last_needed: usize)
-                      -> NifTerm<'a> {
-    let res: Vec<NifTerm> = binaries.iter()
+                      -> Term<'a> {
+    let res: Vec<Term> = binaries.iter()
         .filter(|&&(ref range, _)| range.end >= last_needed)
         .map(|&(ref range, bin)| (range.start, bin).encode(env))
         .collect();
     res.encode(env)
 }
 
-pub fn parse_init<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
+pub fn parse_init<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     let spec = spec_from_term(args[0])?;
 
     let ss_state = SSState {
@@ -86,9 +86,9 @@ pub fn parse_init<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTer
     Ok((::atoms::ok(), state).encode(env))
 }
 
-pub fn parse_iter<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
-    let binaries_ranges: Vec<(Range<usize>, NifBinary)> = read_binaries(args[0])?;
-    let (stack, resource): (Vec<NifTerm<'a>>, ResourceArc<StreamingIterStateWrapper>) =
+pub fn parse_iter<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
+    let binaries_ranges: Vec<(Range<usize>, Binary)> = read_binaries(args[0])?;
+    let (stack, resource): (Vec<Term<'a>>, ResourceArc<StreamingIterStateWrapper>) =
         args[1].decode()?;
 
     let (res, out_stack, mut yields, first_needed) = {

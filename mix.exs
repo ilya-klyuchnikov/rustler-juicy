@@ -7,7 +7,6 @@ defmodule Juicy.Mixfile do
      elixir: "~> 1.4",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
-     compilers: [:rustler] ++ Mix.compilers,
      rustler_crates: rustler_crates(),
      deps: deps()]
   end
@@ -30,7 +29,7 @@ defmodule Juicy.Mixfile do
   #
   # Type "mix help deps" for more examples and options
   defp deps do
-    [{:rustler, "~> 0.8.0"},
+    [{:rustler, "~> 0.26.0"},
      {:ex_doc, "~> 0.14", only: :dev, runtime: false}]
   end
 

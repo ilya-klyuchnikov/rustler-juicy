@@ -1,8 +1,8 @@
 use std::collections::HashMap;
-use ::rustler::{ NifTerm, NifResult, NifError };
-use ::rustler::types::list::NifListIterator;
-use ::rustler::types::map::NifMapIterator;
-use ::rustler::types::atom::NifAtom;
+use ::rustler::{ Term, NifResult, Error };
+use ::rustler::types::list::ListIterator;
+use ::rustler::types::map::MapIterator;
+use ::rustler::types::atom::Atom;
 
 use super::{
     NodeOptions,
@@ -25,10 +25,10 @@ mod atoms {
     }
 }
 
-fn read_opts<'a>(term: NifTerm<'a>, stream_collect: bool) -> NifResult<NodeOptions> {
-    let iterator: NifListIterator = term.decode()?;
+fn read_opts<'a>(term: Term<'a>, stream_collect: bool) -> NifResult<NodeOptions> {
+    let iterator: ListIterator = term.decode()?;
     let mut opts = NodeOptions::default();
-    for decoded in iterator.map(|term| term.decode::<(NifTerm, NifTerm)>()) {
+    for decoded in iterator.map(|term| term.decode::<(Term, Term)>()) {
         let (key, value) = decoded?;
 
         if atoms::stream() == key {
@@ -36,11 +36,11 @@ fn read_opts<'a>(term: NifTerm<'a>, stream_collect: bool) -> NifResult<NodeOptio
         } else if atoms::struct_atom() == key {
             opts.struct_atom = Some(value.decode()?);
         } else if atoms::atom_keys() == key {
-            let mut map: HashMap<Vec<u8>, NifAtom> = HashMap::new();
-            let iterator: NifListIterator = value.decode()?;
+            let mut map: HashMap<Vec<u8>, Atom> = HashMap::new();
+            let iterator: ListIterator = value.decode()?;
             for atom_term in iterator {
                 let atom_str: String = atom_term.atom_to_string()?;
-                let atom: NifAtom = atom_term.decode()?;
+                let atom: Atom = atom_term.decode()?;
                 map.insert(atom_str.into_bytes(), atom);
             }
             opts.atom_mappings = Some(map);
@@ -53,11 +53,11 @@ fn read_opts<'a>(term: NifTerm<'a>, stream_collect: bool) -> NifResult<NodeOptio
     Ok(opts)
 }
 
-fn read_node<'a>(node: NifTerm<'a>, nodes: &mut Vec<Node>, parent: NodeId, stream_collect: bool) -> NifResult<NodeId> {
+fn read_node<'a>(node: Term<'a>, nodes: &mut Vec<Node>, parent: NodeId, stream_collect: bool) -> NifResult<NodeId> {
     let current = NodeId(nodes.len());
 
     // Arity 3
-    match node.decode::<(NifTerm, NifTerm, NifTerm)>() {
+    match node.decode::<(Term, Term, Term)>() {
         Ok((typ, opts, data)) => {
             let opts = read_opts(opts, stream_collect)?;
             let child_stream_collect = opts.stream_collect;
@@ -83,7 +83,7 @@ fn read_node<'a>(node: NifTerm<'a>, nodes: &mut Vec<Node>, parent: NodeId, strea
                 });
 
                 let mut children = HashMap::<String, NodeId>::new();
-                for (key, value) in data.decode::<NifMapIterator>()? {
+                for (key, value) in data.decode::<MapIterator>()? {
                     let child = read_node(value, nodes, current, child_stream_collect)?;
                     children.insert(key.decode()?, child);
                 }
@@ -106,7 +106,7 @@ fn read_node<'a>(node: NifTerm<'a>, nodes: &mut Vec<Node>, parent: NodeId, strea
 
                 Ok(current)
             } else {
-                Err(NifError::BadArg)
+                Err(Error::BadArg)
             };
 
         },
@@ -114,7 +114,7 @@ fn read_node<'a>(node: NifTerm<'a>, nodes: &mut Vec<Node>, parent: NodeId, strea
     }
 
     // Arity 2
-    match node.decode::<(NifTerm, NifTerm)>() {
+    match node.decode::<(Term, Term)>() {
         Ok((typ, opts)) => {
             let opts = read_opts(opts, stream_collect)?;
 
@@ -126,17 +126,17 @@ fn read_node<'a>(node: NifTerm<'a>, nodes: &mut Vec<Node>, parent: NodeId, strea
                 });
                 Ok(current)
             } else {
-                Err(NifError::BadArg)
+                Err(Error::BadArg)
             };
 
         },
         Err(_) => (),
     }
 
-    Err(NifError::BadArg)
+    Err(Error::BadArg)
 }
 
-pub fn spec_from_term<'a>(root: NifTerm<'a>) -> NifResult<Spec> {
+pub fn spec_from_term<'a>(root: Term<'a>) -> NifResult<Spec> {
     let mut nodes = Vec::<Node>::new();
 
     let sentinel = Node {

@@ -1,8 +1,8 @@
 use std::ops::Range;
 use std::io::Write;
 
-use ::rustler::{NifEnv, NifTerm, NifEncoder};
-use ::rustler::types::binary::{NifBinary, OwnedNifBinary};
+use ::rustler::{Env, Term, Encoder};
+use ::rustler::types::binary::{Binary, OwnedBinary};
 
 use super::InputProvider;
 
@@ -16,7 +16,7 @@ pub enum StreamingInputResult {
 
 /// Provides input from a set of binaries.
 pub struct StreamingInputProvider<'a, 'b> where 'a: 'b {
-    pub binaries: &'b [(Range<usize>, NifBinary<'a>)]
+    pub binaries: &'b [(Range<usize>, Binary<'a>)]
 }
 
 impl<'a, 'b> InputProvider<StreamingInputResult> for StreamingInputProvider<'a, 'b> {
@@ -48,12 +48,12 @@ impl<'a, 'b> InputProvider<StreamingInputResult> for StreamingInputProvider<'a, 
         }
     }
 
-    fn range_to_term<'c>(&self, env: NifEnv<'c>, range: PRange) -> NifTerm<'c> {
+    fn range_to_term<'c>(&self, env: Env<'c>, range: PRange) -> Term<'c> {
         // TODO
         let mut buf: Vec<u8> = Vec::new();
         self.push_range(range, &mut buf);
 
-        let mut bin = OwnedNifBinary::new(buf.len()).unwrap();
+        let mut bin = OwnedBinary::new(buf.len()).unwrap();
         bin.as_mut_slice().write(&buf).unwrap();
         bin.release(env).encode(env)
     }

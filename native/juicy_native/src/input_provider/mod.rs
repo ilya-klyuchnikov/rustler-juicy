@@ -1,5 +1,5 @@
 use ::iterative_json_parser::Range as PRange;
-use ::rustler::{NifTerm, NifEnv};
+use ::rustler::{Term, Env};
 
 pub mod single;
 pub mod streaming;
@@ -15,5 +15,5 @@ pub mod streaming;
 pub trait InputProvider<DataResponse> {
     fn byte(&self, pos: usize) -> DataResponse;
     fn push_range(&self, range: PRange, buf: &mut Vec<u8>);
-    fn range_to_term<'a>(&self, env: NifEnv<'a>, range: PRange) -> NifTerm<'a>;
+    fn range_to_term<'a>(&self, env: Env<'a>, range: PRange) -> Term<'a>;
 }

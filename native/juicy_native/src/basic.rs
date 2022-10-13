@@ -1,11 +1,11 @@
 use iterative_json_parser::{Parser, Source, PeekResult, Sink, Range, Pos, NumberData, ParseError,
                             Unexpected, Bailable, Position, StringPosition};
 
-use rustler::{NifEnv, NifTerm, NifResult, NifEncoder};
+use rustler::{Env, Term, NifResult, Encoder};
 use rustler::resource::ResourceArc;
-use rustler::types::binary::NifBinary;
+use rustler::types::binary::Binary;
 use rustler::types::map::map_new;
-use rustler::types::binary::OwnedNifBinary;
+use rustler::types::binary::OwnedBinary;
 
 use ::strings::BuildString;
 use ::numbers::number_data_to_term;
@@ -17,14 +17,14 @@ use std::sync::Mutex;
 use std::ops::DerefMut;
 
 struct BasicSS<'a, 'b> {
-    env: NifEnv<'a>,
+    env: Env<'a>,
 
     input: SingleBinaryProvider<'a>,
 
     position: usize,
     next_reschedule: usize,
 
-    out_stack: Vec<NifTerm<'a>>,
+    out_stack: Vec<Term<'a>>,
     current_string: &'b mut BuildString,
 }
 
@@ -63,7 +63,7 @@ impl<'a, 'b> Sink for BasicSS<'a, 'b> {
         self.out_stack.push(map_new(self.env));
     }
     fn push_array(&mut self, _pos: Position) {
-        let arr: Vec<NifTerm> = Vec::new();
+        let arr: Vec<Term> = Vec::new();
         self.out_stack.push(arr.encode(self.env));
     }
     fn push_number(&mut self, _pos: Position, num: NumberData) -> Result<(), Self::Bail> {
@@ -108,7 +108,7 @@ impl<'a, 'b> Sink for BasicSS<'a, 'b> {
             BuildString::None => "".encode(self.env),
             BuildString::Range(range) => self.input.range_to_term(self.env, range),
             BuildString::Owned(ref buf) => {
-                let mut bin = OwnedNifBinary::new(buf.len()).unwrap();
+                let mut bin = OwnedBinary::new(buf.len()).unwrap();
                 bin.as_mut_slice().write(buf).unwrap();
                 bin.release(self.env).encode(self.env)
             }
@@ -139,11 +139,11 @@ impl<'a, 'b> Sink for BasicSS<'a, 'b> {
     }
 }
 
-fn format_unexpected<'a>(env: NifEnv<'a>,
+fn format_unexpected<'a>(env: Env<'a>,
                          parser: &Parser,
                          pos: Pos,
                          reason: Unexpected)
-                         -> NifTerm<'a> {
+                         -> Term<'a> {
     let parser_state = format!("{:?}", parser).encode(env);
     let position = pos.0 as u64;
     let explaination = reason.explain().encode(env);
@@ -157,11 +157,11 @@ pub struct IterState {
 }
 pub struct IterStateWrapper(Mutex<IterState>);
 
-fn parse_inner<'a>(env: NifEnv<'a>,
-                   input: NifBinary<'a>,
-                   stack: Vec<NifTerm<'a>>,
+fn parse_inner<'a>(env: Env<'a>,
+                   input: Binary<'a>,
+                   stack: Vec<Term<'a>>,
                    iter_state: &mut IterState)
-                   -> Result<NifTerm<'a>, Vec<NifTerm<'a>>> {
+                   -> Result<Term<'a>, Vec<Term<'a>>> {
     let mut ss = BasicSS {
         env: env,
         input: SingleBinaryProvider::new(input),
@@ -189,8 +189,8 @@ fn parse_inner<'a>(env: NifEnv<'a>,
     }
 }
 
-pub fn parse<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
-    let input: NifBinary = args[0].decode()?;
+pub fn parse<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
+    let input: Binary = args[0].decode()?;
 
     let mut iter_state = IterState {
         parser: Parser::new(),
@@ -207,9 +207,9 @@ pub fn parse<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>
     }
 }
 
-pub fn parse_iter<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
-    let input: NifBinary = args[0].decode()?;
-    let stack: Vec<NifTerm<'a>> = args[1].decode()?;
+pub fn parse_iter<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
+    let input: Binary = args[0].decode()?;
+    let stack: Vec<Term<'a>> = args[1].decode()?;
     let resource: ResourceArc<IterStateWrapper> = args[2].decode()?;
     let mut resource_inner_guard = resource.0.lock().unwrap();
     let mut resource_inner = resource_inner_guard.deref_mut();

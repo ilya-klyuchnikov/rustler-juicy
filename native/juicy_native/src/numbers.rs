@@ -1,7 +1,7 @@
 use ::rustler::{
-    NifEnv,
-    NifTerm,
-    NifEncoder,
+    Env,
+    Term,
+    Encoder,
 };
 
 use ::num_traits::Num;
@@ -11,7 +11,7 @@ use ::std::str::FromStr;
 
 use ::iterative_json_parser::{NumberData, Range};
 
-fn integer_to_bigint_term<'a>(env: NifEnv<'a>, sign: bool, number: &str) -> NifTerm<'a> {
+fn integer_to_bigint_term<'a>(env: Env<'a>, sign: bool, number: &str) -> Term<'a> {
     // http://erlang.org/doc/apps/erts/erl_ext_dist.html#id101259
 
     let num = BigUint::from_str_radix(number, 10).unwrap();
@@ -40,7 +40,7 @@ fn integer_to_bigint_term<'a>(env: NifEnv<'a>, sign: bool, number: &str) -> NifT
     term
 }
 
-fn integer_to_term<'a>(env: NifEnv<'a>, sign: bool, num_str: &str) -> NifTerm<'a> {
+fn integer_to_term<'a>(env: Env<'a>, sign: bool, num_str: &str) -> Term<'a> {
     if sign {
         match u64::from_str(num_str) {
             Ok(number) => number.encode(env),
@@ -54,12 +54,12 @@ fn integer_to_term<'a>(env: NifEnv<'a>, sign: bool, num_str: &str) -> NifTerm<'a
     }
 }
 
-fn float_to_term<'a>(env: NifEnv<'a>, num_str: &str) -> NifTerm<'a> {
+fn float_to_term<'a>(env: Env<'a>, num_str: &str) -> Term<'a> {
     let number = f64::from_str(num_str).ok().unwrap();
     number.encode(env)
 }
 
-pub fn number_data_to_term<'a, F>(env: NifEnv<'a>, data: NumberData, range_provider: F) -> NifTerm<'a>
+pub fn number_data_to_term<'a, F>(env: Env<'a>, data: NumberData, range_provider: F) -> Term<'a>
     where F: Fn(Range, &mut Vec<u8>) {
 
     // TODO: Do not allocate

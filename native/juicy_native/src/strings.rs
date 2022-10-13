@@ -1,8 +1,8 @@
 use ::iterative_json_parser::Range;
 use ::std::io::Write;
 
-use ::rustler::{NifTerm, NifEnv, NifEncoder};
-use ::rustler::types::binary::OwnedNifBinary;
+use ::rustler::{Term, Env, Encoder};
+use ::rustler::types::binary::OwnedBinary;
 
 use ::input_provider::InputProvider;
 
@@ -91,12 +91,12 @@ impl BuildString {
         }
     }
 
-    pub fn to_term<'a, T, M>(self, input: &mut T, env: NifEnv<'a>) -> NifTerm<'a> where T: InputProvider<M> {
+    pub fn to_term<'a, T, M>(self, input: &mut T, env: Env<'a>) -> Term<'a> where T: InputProvider<M> {
         match self {
             BuildString::None => "".encode(env),
             BuildString::Range(range) => input.range_to_term(env, range),
             BuildString::Owned(ref buf) => {
-                let mut bin = OwnedNifBinary::new(buf.len()).unwrap();
+                let mut bin = OwnedBinary::new(buf.len()).unwrap();
                 bin.as_mut_slice().write(buf).unwrap();
                 bin.release(env).encode(env)
             }

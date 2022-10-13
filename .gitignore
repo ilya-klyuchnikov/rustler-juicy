@@ -22,3 +22,5 @@ erl_crash.dump
 /priv/native/*
 
 /native/juicy_native/target/
+
+.idea/

@@ -8,7 +8,7 @@ extern crate lazy_static;
 extern crate num_traits;
 extern crate num_bigint;
 
-use rustler::{NifEnv, NifTerm, NifResult, NifEncoder};
+use rustler::{Env, Term, NifResult, Encoder};
 
 extern crate iterative_json_parser;
 
@@ -54,14 +54,14 @@ rustler_export_nifs! {
     Some(on_init)
 }
 
-fn validate_spec<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
+fn validate_spec<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     match tree_spec::spec_from_term(args[0]) {
         Ok(_) => Ok(atoms::ok().encode(env)),
         Err(_) => Ok(atoms::error().encode(env)),
     }
 }
 
-fn on_init<'a>(env: NifEnv<'a>, _load_info: NifTerm<'a>) -> bool {
+fn on_init<'a>(env: Env<'a>, _load_info: Term<'a>) -> bool {
     resource_struct_init!(basic::IterStateWrapper, env);
     resource_struct_init!(basic_spec::BasicSpecIterStateWrapper, env);
     resource_struct_init!(streaming::StreamingIterStateWrapper, env);

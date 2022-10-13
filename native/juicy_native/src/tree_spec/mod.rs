@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use rustler::types::atom::NifAtom;
+use rustler::types::atom::Atom;
 
 mod from_term;
 mod walker;
@@ -83,8 +83,8 @@ impl NodeVariant {
 pub struct NodeOptions {
     pub stream: bool,
     pub stream_collect: bool,
-    pub struct_atom: Option<NifAtom>,
-    pub atom_mappings: Option<HashMap<Vec<u8>, NifAtom>>,
+    pub struct_atom: Option<Atom>,
+    pub atom_mappings: Option<HashMap<Vec<u8>, Atom>>,
     pub ignore_non_atoms: bool,
 }
 impl Default for NodeOptions {

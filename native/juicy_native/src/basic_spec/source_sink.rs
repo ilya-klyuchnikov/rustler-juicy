@@ -5,9 +5,9 @@ use ::numbers::number_data_to_term;
 
 use ::tree_spec::ValueType;
 
-use rustler::{NifEnv, NifTerm, NifEncoder};
+use rustler::{Env, Term, Encoder};
 use rustler::types::map::map_new;
-use rustler::types::binary::OwnedNifBinary;
+use rustler::types::binary::OwnedBinary;
 
 use ::iterative_json_parser::{Bailable, Source, Sink, Pos, PeekResult, Position, NumberData,
                               StringPosition};
@@ -21,10 +21,10 @@ use ::path_tracker::PathTracker;
 pub struct StreamingSS<'a, 'b>
     where 'a: 'b
 {
-    pub env: NifEnv<'a>,
+    pub env: Env<'a>,
     pub input: SingleBinaryProvider<'a>,
     pub next_reschedule: usize,
-    pub out_stack: Vec<NifTerm<'a>>,
+    pub out_stack: Vec<Term<'a>>,
     pub state: &'b mut SSState,
 }
 
@@ -70,7 +70,7 @@ impl<'a, 'b> Sink for StreamingSS<'a, 'b> {
         self.state.first_needed = self.state.position;
     }
     fn push_array(&mut self, pos: Position) {
-        let arr: Vec<NifTerm> = Vec::new();
+        let arr: Vec<Term> = Vec::new();
         self.out_stack.push(arr.encode(self.env));
 
         self.state.path_tracker.enter_array(pos);
@@ -143,7 +143,7 @@ impl<'a, 'b> Sink for StreamingSS<'a, 'b> {
                 if let Some(atom) = key_atom {
                     self.out_stack.push(atom.encode(self.env));
                 } else {
-                    let mut bin = OwnedNifBinary::new(key.len()).unwrap();
+                    let mut bin = OwnedBinary::new(key.len()).unwrap();
                     bin.as_mut_slice().write(&key).unwrap();
                     self.out_stack.push(bin.release(self.env).encode(self.env));
                 }

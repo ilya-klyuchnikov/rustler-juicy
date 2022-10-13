@@ -6,11 +6,11 @@ authors = []
 [lib]
 name = "juicy_native"
 path = "src/lib.rs"
-crate-type = ["dylib"]
+crate-type = ["cdylib"]
 
 [dependencies]
-rustler = "0.14.0"
-rustler_codegen = "0.14.0"
+rustler = "0.26.0"
+rustler_codegen = "0.26.0"
 lazy_static = "0.2"
 
 num-traits = "0.1"

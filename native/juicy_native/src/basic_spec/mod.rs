@@ -1,8 +1,8 @@
 use iterative_json_parser::{Parser, Pos, ParseError, Unexpected};
 
-use rustler::{NifEnv, NifTerm, NifResult, NifEncoder};
+use rustler::{Env, Term, NifResult, Encoder};
 use rustler::resource::ResourceArc;
-use rustler::types::binary::NifBinary;
+use rustler::types::binary::Binary;
 
 use ::strings::BuildString;
 
@@ -19,7 +19,7 @@ use std::ops::DerefMut;
 mod source_sink;
 use self::source_sink::{StreamingSS, SSState};
 
-fn format_unexpected<'a>(env: NifEnv<'a>, pos: Pos, reason: Unexpected) -> NifTerm<'a> {
+fn format_unexpected<'a>(env: Env<'a>, pos: Pos, reason: Unexpected) -> Term<'a> {
     let position = pos.0 as u64;
     let explaination = reason.explain().encode(env);
     (::atoms::error(), (::atoms::unexpected(), position, explaination)).encode(env)
@@ -31,8 +31,8 @@ pub struct BasicSpecIterState {
 }
 pub struct BasicSpecIterStateWrapper(Mutex<BasicSpecIterState>);
 
-pub fn parse_init<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
-    let binary: NifBinary = args[0].decode()?;
+pub fn parse_init<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
+    let binary: Binary = args[0].decode()?;
     let spec = spec_from_term(args[1])?;
 
     let ss_state = SSState {
@@ -57,9 +57,9 @@ pub fn parse_init<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTer
     Ok((::atoms::ok(), state).encode(env))
 }
 
-pub fn parse_iter<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
-    let (binary, stack, resource): (NifBinary,
-                                    Vec<NifTerm<'a>>,
+pub fn parse_iter<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
+    let (binary, stack, resource): (Binary,
+                                    Vec<Term<'a>>,
                                     ResourceArc<BasicSpecIterStateWrapper>) = args[0].decode()?;
 
     let (res, mut out_stack) = {
