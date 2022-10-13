@@ -14,5 +14,5 @@ defmodule Juicy.Native do
 
   def validate_spec(_), do: err()
 
-  defp err, do: throw NifNotLoadedError
+  defp err, do: :erlang.nif_error(:nif_not_loaded)
 end
