@@ -64,7 +64,7 @@ pub fn parse_iter<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
 
     let (res, mut out_stack) = {
         let mut resource_inner_guard = resource.0.lock().unwrap();
-        let mut iter_state = resource_inner_guard.deref_mut();
+        let iter_state = resource_inner_guard.deref_mut();
 
         let mut ss = StreamingSS {
             env: env,

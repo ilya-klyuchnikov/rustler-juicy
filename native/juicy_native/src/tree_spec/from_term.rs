@@ -13,15 +13,15 @@ use super::{
 };
 
 mod atoms {
-    rustler_atoms! {
-        atom stream;
-        atom any;
-        atom map;
-        atom map_keys;
-        atom array;
-        atom struct_atom;
-        atom atom_keys;
-        atom ignore_non_atoms;
+    atoms! {
+        stream,
+        any,
+        map,
+        map_keys,
+        array,
+        struct_atom,
+        atom_keys,
+        ignore_non_atoms,
     }
 }
 

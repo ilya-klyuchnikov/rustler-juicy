@@ -188,7 +188,7 @@ impl<'a, 'b> Sink for StreamingSS<'a, 'b> {
 
         self.state.first_needed = self.state.position;
 
-        let curr_node = self.state.path_tracker.exit_array();
+        let _curr_node = self.state.path_tracker.exit_array();
 
         Ok(())
     }

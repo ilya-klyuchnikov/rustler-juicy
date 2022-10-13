@@ -212,7 +212,7 @@ pub fn parse_iter<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
     let stack: Vec<Term<'a>> = args[1].decode()?;
     let resource: ResourceArc<IterStateWrapper> = args[2].decode()?;
     let mut resource_inner_guard = resource.0.lock().unwrap();
-    let mut resource_inner = resource_inner_guard.deref_mut();
+    let resource_inner = resource_inner_guard.deref_mut();
 
     match parse_inner(env, input, stack, resource_inner) {
         Ok(res) => Ok(res),

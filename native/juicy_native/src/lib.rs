@@ -1,8 +1,6 @@
 #[macro_use]
 extern crate rustler;
-#[macro_use]
 extern crate rustler_codegen;
-#[macro_use]
 extern crate lazy_static;
 
 extern crate num_traits;
@@ -23,17 +21,17 @@ mod basic_spec;
 mod streaming;
 
 mod atoms {
-    rustler_atoms! {
-        atom ok;
-        atom nil;
-        atom error;
-        atom unexpected;
-        atom iter;
-        atom streamed;
-        atom yield_ = "yield";
-        atom await_input;
-        atom finished;
-        atom __struct__;
+    rustler::atoms! {
+        ok,
+        nil,
+        error,
+        unexpected,
+        iter,
+        streamed,
+        yield_ = "yield",
+        await_input,
+        finished,
+        __struct__,
     }
 }
 
@@ -62,8 +60,8 @@ fn validate_spec<'a>(env: Env<'a>, args: &[Term<'a>]) -> NifResult<Term<'a>> {
 }
 
 fn on_init<'a>(env: Env<'a>, _load_info: Term<'a>) -> bool {
-    resource_struct_init!(basic::IterStateWrapper, env);
-    resource_struct_init!(basic_spec::BasicSpecIterStateWrapper, env);
-    resource_struct_init!(streaming::StreamingIterStateWrapper, env);
+    resource!(basic::IterStateWrapper, env);
+    resource!(basic_spec::BasicSpecIterStateWrapper, env);
+    resource!(streaming::StreamingIterStateWrapper, env);
     true
 }
